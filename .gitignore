@@ -15,3 +15,8 @@
 /log/*
 !/log/.keep
 /tmp
+
+# Omniauth config file containing Google+ app id + secret
+/config/initializers/omniauth.rb
+# SSL cert used for Google+ authentication and verification
+cacert.pem

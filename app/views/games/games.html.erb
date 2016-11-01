@@ -1,4 +1,3 @@
-<%= mock_fb_tabs(:active_games) %>
 <h1><%= "#{@player.name}" %></h1>
 <%= "<h2>Welcome to Setsolver!  Press 'New Game' below to create a game.</h2>" unless @games.length > 0 %>
 <%= "<h2>Games waiting to start:</h2>" if @player.has_games_waiting_to_start? %>

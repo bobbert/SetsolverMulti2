@@ -1,17 +1,15 @@
-<%= mock_fb_tabs(:how_to_play) %>
-
 <h1>How To Play Setsolver</h1>
 Setsolver is a Facebook interactive version of the SET&dagger; card game, where the object of the
 game is to find "sets" of three cards with matching characteristics.  Each card has four characteristics:
 <ul>
-<li><strong>number</strong>: the number of shapes on the card.  Every card will have 
-    <strong>1</strong>, <strong>2</strong>, or <strong>3</strong> shapes, and multiple shapes will 
+<li><strong>number</strong>: the number of shapes on the card.  Every card will have
+    <strong>1</strong>, <strong>2</strong>, or <strong>3</strong> shapes, and multiple shapes will
     always be identical to one another.</li>
 <li><strong>shape</strong>: the type of shape displayed on the card.  These shapes will always be
     either <strong>oval</strong>, <strong>diamond</strong>, or <strong>squiggle</strong>.
-<li><strong>color</strong>: the color of the shapes (<strong>red</strong>, <strong>green</strong>, 
+<li><strong>color</strong>: the color of the shapes (<strong>red</strong>, <strong>green</strong>,
     or <strong>purple</strong>).</li>
-<li><strong>shading</strong>: how darkly shaded are the shapes? Shapes can be either 
+<li><strong>shading</strong>: how darkly shaded are the shapes? Shapes can be either
     <strong>outlined</strong>, <strong>filled</strong> solid, or <strong>shaded</strong> with line patterns.</li>
 </ul>
 <p>Think about normal playing cards -- they have two characteristics (number and suit) and the cards
@@ -24,7 +22,7 @@ few examples: </p>
 <h2>Finding a Set</h2>
 
 <p>Now that you are familiar with the cards, we move on to the object of the game: finding three-card
-sets. A collection of three cards is considered a set if <strong>all four of their characteristics are 
+sets. A collection of three cards is considered a set if <strong>all four of their characteristics are
 either all alike or all different</strong>.   Three purple cards would count as "all alike" in its
 color characteristic, and if these cards were one red, one green, and one purple this would count as
 "all different".  If all three other characteristics (number, shading, and shape) fit this patterns
@@ -37,7 +35,7 @@ two purples and a green) then you don't have a Set, regardless of the other thre
 
 <p><%= render_threecard_set_from_cardface_ids(4,31,58) %>: This is a Set because the colors are
 all green, the shadings are all filled, the shapes are all diamonds, but the numbers are all
-different (1 diamond, 2 diamond, and 3 diamonds).  Sets like this with three common 
+different (1 diamond, 2 diamond, and 3 diamonds).  Sets like this with three common
 characteristics are the easiest to find.</p>
 
 <p><%= render_threecard_set_from_cardface_ids(12,13,17) %>: This is a Set because the colors are
@@ -57,4 +55,3 @@ different (diamond, squiggle, diamond), and as such this is not a Set.</p>
 
 <p><%= render_threecard_set_from_cardface_ids(65,60,73) %>: Another deceptive non-Set: the numbers
 and colors match up, but the shadings do not. (2 shaded, 1 filled).</p>
-
