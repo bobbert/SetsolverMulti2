@@ -1,0 +1,9 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  game_id: 1
+  finished_at: 2016-10-31 13:27:10
+
+two:
+  game_id: 1
+  finished_at: 2016-10-31 13:27:10
