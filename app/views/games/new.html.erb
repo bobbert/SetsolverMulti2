@@ -1,10 +1,11 @@
-<% form_for(@game) do |f| %>
+<%= @game.inspect %>
+<%= form_for @game do |f| %>
   <p>
     <b>Enter a name for your game:</b>
     <%= f.text_field :name, :value => default_game_name %>
   </p>
 
   <p>
-    <%= f.submit 'Create New Game', :class => "fb-button" %>
+    <%= f.submit 'Create New Game' %>
   </p>
 <% end %>

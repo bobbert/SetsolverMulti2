@@ -22,20 +22,14 @@ class Threecardset < ActiveRecord::Base
     cards.map {|card| card.cardface }
   end
 
-  # returns deck if cards are present, or nil otherwise.
-  # All cards must belong to the same deck; see validation above
-  def deck
-    cards[0].deck if cards.length > 0
-  end
-
-  # returns game if deck is present
+  # returns game if player is present
   def game
-    deck.game if deck
+    player.game if player
   end
 
-  # returns Score object (game-player association)
-  def score
-    Score.find_by_player_id_and_game_id( player.id, game.id )
+  # returns deck if cards are present
+  def deck
+    game.deck if game
   end
 
   # returns list of common attributes within set

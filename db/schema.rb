@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20161101151716) do
+ActiveRecord::Schema.define(version: 20161101233213) do
 
   create_table "cardfaces", force: :cascade do |t|
     t.integer  "number"
@@ -42,27 +42,29 @@ ActiveRecord::Schema.define(version: 20161101151716) do
   create_table "games", force: :cascade do |t|
     t.integer  "selection_count"
     t.string   "name"
-    t.datetime "last_played_at"
     t.datetime "started_at"
+    t.datetime "paused_at"
+    t.datetime "resumed_at"
     t.datetime "finished_at"
     t.datetime "created_at",      null: false
     t.datetime "updated_at",      null: false
   end
 
   create_table "players", force: :cascade do |t|
-    t.string   "name"
-    t.integer  "wins"
-    t.integer  "losses"
+    t.integer  "game_id"
+    t.integer  "score"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer  "profile_id"
   end
 
-  create_table "scores", force: :cascade do |t|
-    t.integer  "player_id"
-    t.integer  "game_id"
-    t.integer  "points"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+  create_table "profiles", force: :cascade do |t|
+    t.integer  "user_id"
+    t.integer  "games_played", default: 0
+    t.integer  "wins",         default: 0
+    t.integer  "losses",       default: 0
+    t.datetime "created_at",               null: false
+    t.datetime "updated_at",               null: false
   end
 
   create_table "threecardsets", force: :cascade do |t|

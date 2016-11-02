@@ -16,13 +16,8 @@ module ApplicationHelper
     date.strftime("%m/%d/%Y %I:%M:%S %p") if date
   end
 
-  # alias of Player of current_user
-  def current_player
-    Player.new
-  end
-
   def default_game_name
-    "#{current_player.name}'s #{(current_player.games.length + 1).ordinalize} game"
+    "#{@current_profile.name}'s #{(@current_profile.games.length + 1).ordinalize} game"
   end
 
   def print_example_cards

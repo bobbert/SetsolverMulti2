@@ -1,12 +1,12 @@
 class GamesController < ApplicationController
 
-    before_filter :get_player_and_game
+    before_filter :get_game
 
     # GET /players/1/games
     # GET /players/1/games.xml
     def index
       # listing all games within selected player
-      @games = @player.games
+      @games = @current_profile.games
 
       respond_to do |format|
         format.html # index.html.erb
@@ -42,11 +42,11 @@ class GamesController < ApplicationController
     # POST /players/1/games
     # POST /players/1/games.xml
     def create
-      # create game and save, then add Score connector
-      @game = Game.new(params[:game])
+      # create game and save
+      @game = Game.new(game_params)
       respond_to do |format|
         # creating new game, and new association between selected player and game
-        if @game.save && @game.add_player(@player)
+        if @game.save && @game.add_new_player(@current_profile)
           flash[:notice] = 'Game was successfully created.'
           format.html { redirect_to(games_url) }
           format.xml  { render :xml => @game, :status => :created, :location => @game }
@@ -61,7 +61,7 @@ class GamesController < ApplicationController
     # PUT /players/1/games/1.xml
     def update
       respond_to do |format|
-        if @game.update_attributes(params[:game])
+        if @game.update_attributes(game_params)
           flash[:notice] = 'Game was successfully updated.'
           format.html { redirect_to(@game) }
           format.xml  { head :ok }
@@ -76,7 +76,7 @@ class GamesController < ApplicationController
     # DELETE /players/1/games/1.xml
     def destroy
       # delete Score first, then Game
-      @score.destroy if @score
+      @game.players.each {|p| p.destroy }
       @game.destroy
 
       respond_to do |format|
@@ -108,14 +108,6 @@ class GamesController < ApplicationController
       render :action => render_action
     end
 
-    # def friends
-    #   @friends = @current_user.friends
-    #   respond_to do |format|
-    #     format.html {  }
-    #     format.xml  { head :ok }
-    #   end
-    # end
-
     def howtoplay
       respond_to do |format|
         format.html {  }
@@ -131,7 +123,7 @@ class GamesController < ApplicationController
     end
 
     # add player to current game
-    def add_player
+    def add_new_player
       add_remove_player :add
     end
 
@@ -170,7 +162,7 @@ class GamesController < ApplicationController
         flash[:error] = 'You did not select three cards.'
         return false
       end
-      @found_set = @game.make_set_selection( @player, *selection_cards )
+      @found_set = @game.make_set_selection( @current_profile, *selection_cards )
       unless @found_set
         flash[:notice] = 'The three cards you selected are not a set.'
         return false
@@ -180,20 +172,16 @@ class GamesController < ApplicationController
       true
     end
 
-    # get Player objects, and Game and Score objects if a game ID was passed in.
+    # get Game object if a game ID was passed in.
     # This routine throws a UserNotPlayingGame error if the game ID passed in
     # is not being played by the current user.
-    def get_player_and_game
+    def get_game
    #   flash[:error] = nil  # RWP TEMP - get rid of this if/when flash works correctly
+      current_user  # get user and profile
       @sets = []
       @found_set = nil
-      @player = Player.find(1) # RWP TEMP - just use first player
       if (params[:id])
         @game = Game.find(params[:id])
-        @score = Score.find_by_player_id_and_game_id( @player.id, params[:id] )
-        if @score.blank?
-          return user_not_playing_game
-        end
       end
       true
     end
@@ -202,13 +190,13 @@ class GamesController < ApplicationController
     # key = :card<number>, value = "SELECTED"
     # The array of card numbers is always in numerical order.
     def get_card_numbers
-      cardparams = params.clone.delete_if do |k,v|
+      cardparams = game_params.clone.delete_if do |k,v|
         (v.to_s != 'SELECTED') || (k.to_s !~ /^card[0-9]+$/)
       end
       nums = cardparams.map {|cardparam| cardparam.to_s.sub(/^card/,'').to_i }.sort
     end
 
-    ADD_REMOVE_OPTS = { :add => 'add_player', :remove => 'remove_player' }
+    ADD_REMOVE_OPTS = { :add => 'add_new_player', :remove => 'remove_player' }
 
     # internal routine for adding and removing players
     def add_remove_player( opt )
@@ -229,4 +217,7 @@ class GamesController < ApplicationController
       redirect_to(game_url)
     end
 
+    def game_params
+      params.require(:game).permit(:name)
+    end
 end

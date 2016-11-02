@@ -1,6 +1,6 @@
 class Game < ActiveRecord::Base
   has_one :deck
-  has_many :scores
+  has_many :players
 
   after_create :new_deck
 
@@ -10,16 +10,6 @@ class Game < ActiveRecord::Base
   SetboardColWidth = 84
 
   MaxSecondsToFindSet = 300
-
-  # hash of (tab_name => action) pairs used to render mock Facebook tab menu
-  GameTabs = [:new_game, :active_games, :completed_games, :how_to_play]
-  GameTabMethods = {:new_game => :new_game,
-                    :active_games => :games,
-                    :completed_games => :archives,
-                    :how_to_play => :howtoplay
-                   }
-  GameTabVisibleConditions = { :active_games => 'has_active_games?',
-                               :completed_games => 'has_archived_games?' }
 
   # each_cmb3 (Class method)
   # performs a ( len 3 ) statistical combination, where len is the length of the
@@ -101,21 +91,9 @@ class Game < ActiveRecord::Base
     return 'waiting'
   end
 
-  # get all players playing in this game
-  def players
-    scores.sort.map {|sc| sc.player }
-  end
-
   # return Score corresponding to player passed in
   def score( plyr )
-    scores.select {|sc| sc.player == plyr }.first
-  end
-
-  # updates score: player's score increases by 1 and set selection count increases by 1 as well
-  def increment_score( plyr )
-    score(plyr).increment
-    self.selection_count += 1
-    save
+    plyr.score
   end
 
   # has game been started?  Games musst have at least one player and a start date to be considered started.
@@ -128,20 +106,19 @@ class Game < ActiveRecord::Base
     !(waiting_to_start?)
   end
 
-  # is game active?...i.e. started but not finished?
+  # has game been completed and archived?
+  def paused?
+    !(paused_at.nil?)
+  end
+
+  # is game currently running?
   def active?
-    started? && !finished?
+    started? && !paused? && !finished?
   end
 
   # has game been completed and archived?
   def finished?
     !(finished_at.nil?)
-  end
-
-  # return completion percentage
-  def percent_complete
-    return 100 if finished?
-    100 - ((deck.facedown.length + field.length) * 100 / deck.cards.length)
   end
 
   # is this a multi-player game?
@@ -150,8 +127,8 @@ class Game < ActiveRecord::Base
   end
 
    # can players be added to this game?
-  def can_add_player?
-    players.length < MaxPlayers
+  def can_add_new_player?
+    waiting_to_start? && (players.length < MaxPlayers)
   end
 
   # list of players that can be added
@@ -160,18 +137,17 @@ class Game < ActiveRecord::Base
   end
 
   # adds player to new game -- returns player added if successful
-  def add_player( new_player )
-    return false unless can_add_player?
-    sc = Score.new
-    self.scores << sc
-    new_player.scores << sc
+  def add_new_player( profile )
+    return false unless can_add_new_player?
+    pl = Player.new
+    pl.profile = profile
+    self.players << pl
   end
 
   # remove player from new game -- returns player if removed
-  def remove_player( player )
-    sc = Score.find_by_player_id_and_game_id( player.id, self.id )
-    return false unless sc
-    sc.player if sc.destroy
+  def remove_player( profile )
+    pl = Player.find_by_profile_id_and_game_id( profile.id, self.id )
+    pl.destroy if pl
   end
 
   # get names of players
@@ -183,7 +159,7 @@ class Game < ActiveRecord::Base
   # If :all is passed as a parameter, return all sets.
   def sets( num_most_recent = Game::ActivityLogSize )
     return [] unless (num_most_recent.is_a?(Integer) || num_most_recent == :all)
-    all_sets = scores.inject([]) {|s_arr, score| s_arr += score.sets }
+    all_sets = players.inject([]) {|s_arr, player| s_arr += player.threecardsets }
     return (num_most_recent == :all) ? all_sets.sort : all_sets.sort.slice(0,num_most_recent)
   end
 
@@ -257,7 +233,8 @@ class Game < ActiveRecord::Base
     seconds_to_find = (Time.now - self.last_played_at)
     seconds_to_find = MaxSecondsToFindSet if (seconds_to_find > MaxSecondsToFindSet)
     # increment score
-    increment_score plyr
+    plyr.score += 1
+    plyr.save
     # create new set
     newset = Threecardset.new :cards => [card1, card2, card3], :player => plyr,
 	                      :seconds_to_find => seconds_to_find
@@ -273,10 +250,24 @@ class Game < ActiveRecord::Base
 
 private
 
-   # resets internal timer
-   def reset_timer
-     self.last_played_at = Time.now
-     save
-   end
+  # pause game
+  def pause
+    self.paused_at = Time.now
+    self.resumed_at = nil
+    save
+  end
+
+  # resume game
+  def resume_play
+    self.paused_at = nil
+    self.resumed_at = Time.now
+    save
+  end
+
+  # mark game as finished
+  def finish
+    self.finished_at = Time.now
+    save
+  end
 
 end

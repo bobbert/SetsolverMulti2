@@ -1,6 +1,6 @@
 <h1>Editing game <%= @game.title %></h1>
 
-<% if @player %>
+<% if @current_profile %>
   <% form_for(@game) do |f| %>
     <p>
       <b>Selection Count:</b>
