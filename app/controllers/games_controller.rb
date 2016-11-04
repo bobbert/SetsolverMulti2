@@ -148,21 +148,16 @@ class GamesController < ApplicationController
     # Ajax refresh routine for auto-selection
     def get_field
       get_game if @game.blank?
-      response = {:field => @game.field}
+      gamefield_for_response = @game.flat_field.map do |card|
+        {:name => card.name, :image => card.img_path}
+      end
       if @found_set.blank?
-        render :json => {:field => @game.field.to_json({:include =>
-            {:cardface => {:methods => [:abbrev, :img_path]}}
-          })
-        }
+        render :json => {:field => gamefield_for_response}
       else
-        render :json => {:field => @game.field.to_json({:include =>
-            {:cardface => {:methods => [:abbrev, :img_path]}}
-          }),
+        render :json => {
+          :field => gamefield_for_response,
           :state => :good_move,
-          :set => @found_set.to_json({:include =>
-            {:cards => {:include =>
-              {:cardface => {:methods => [:abbrev, :img_path]}}}}
-            })
+          :set => @found_set.cards.map {|card| {:name => card.name, :image => card.small_img_path} }
         }
       end
       return true

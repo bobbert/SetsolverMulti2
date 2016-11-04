@@ -29,15 +29,34 @@ $(document).ready(function() {
       if (data.state === 'good_move') {
         $('#notice').hide();
         $('#error').hide();
-        updateBoard(data);
+        updateBoard(data.field);
       }
       else if (data.state === 'bad_move') {
         $('#notice').text(data.error).show();
         $('#error').hide();
+        unselectAllCards();
       }
     }).fail(function(jqXHR, textStatus) {
       $('#notice').hide();
       $('#error').text(textStatus).show();
+    });
+  }
+
+  function updateBoard(board) {
+    for (var cardIndex = 0; cardIndex < board.length; cardIndex++) {
+      var cardData = board[cardIndex];
+      var $cardImg = $('#c_card' + cardIndex).find('img');
+      if ($cardImg.length > 0) {
+        $cardImg.attr('src', cardData.image).attr('alt', cardData.name);
+      }
+    }
+    unselectAllCards();
+  }
+
+  function unselectAllCards() {
+    $('#setboard li.setboard-cell').each(function(index, cell) {
+      $(cell).removeClass('selected');
+      $(cell).find('input:checkbox').prop('checked', false);
     });
   }
 
