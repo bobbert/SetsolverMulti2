@@ -3,18 +3,6 @@ class GamesController < ApplicationController
 
     #------ Game resource methods ----#
 
-    # GET /games
-    # GET /games.json
-    def index
-      # listing all games within selected player
-      current_user
-      @games = @current_profile.games
-      respond_to do |format|
-        format.html # index.html.erb
-        format.json  { render :json => @games }
-      end
-    end
-
     # GET /games/1
     # GET /games/1.json
     def show
@@ -34,11 +22,6 @@ class GamesController < ApplicationController
         format.html # new.html.erb
         format.json  { render :json => @game }
       end
-    end
-
-    # GET /games/1/edit
-    def edit
-      true
     end
 
     # POST /games

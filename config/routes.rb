@@ -2,16 +2,19 @@ Rails.application.routes.draw do
 
   get 'class/PagesController'
 
-  root :to => "pages#home"
+  root :to => "profiles#home"
+
+  # links from main page: not based on game data but piggybacks off of
+  get 'archives' => 'profiles#archives', as: :archives
+  get 'howtoplay' => 'profiles#howtoplay', as: :howtoplay
 
   # mapping games resources, in standard RESTful format
-  resources :games
-  # resources :users
+  resources :games, only: [:show, :new, :create, :update, :destroy]
 
   # game playing link: /games/1/play
   get 'games/:id/play' => 'games#play', as: :play
 
-  # game playing link: /games/1/play
+  # method for submitting sets: /games/1/play_cards
   put 'games/:id/play_cards' => 'games#play_cards', as: :play_cards
 
   # game archive link for finished games: /games/1/archive
@@ -19,14 +22,6 @@ Rails.application.routes.draw do
 
   # Ajax updater link: /games/1/refresh
   get 'games/:id/field.:format' => 'games#get_field', as: :get_field
-
-  # setgame information link: /games/1/setgame
-  get 'games/:id/setgame.:format' => 'games#setgame', as: :setgame
-
-  # links from main page: not based on game data but piggybacks off of
-  # User-selection functions (RWP: ...for now)
-  get 'archives' => 'games#archives', as: :archives
-  get 'howtoplay' => 'games#howtoplay', as: :howtoplay
 
   # OAuth based routes
   get 'auth/:provider/callback', to: 'sessions#create'

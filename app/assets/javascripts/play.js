@@ -37,6 +37,9 @@ $(document).ready(function() {
         $('#error').hide();
         unselectAllCards();
       }
+      else if (data.state === 'finished') {
+        alert("Game finished.");
+      }
     }).fail(function(jqXHR, textStatus) {
       $('#notice').hide();
       $('#error').text(textStatus).show();

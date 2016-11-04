@@ -1,0 +1,19 @@
+<h1><%= "#{@current_profile.name}" %></h1>
+<%= link_to("Create a new game", new_game_path, :class => 'mock-fb-button') %>
+<%= link_to("How to play Setsolver", howtoplay_path, :class => 'mock-fb-button')  %>
+<% if @current_profile.has_games_waiting_to_start? %>
+  <h2>Games waiting to start:</h2>
+  <% for game in @current_profile.games_waiting_to_start %>
+      <p><%= game_desc_as_link(game) %> (<%= game.player_names %>):  <%= game_play_link(game) %></p>
+  <% end %>
+<% end %>
+<% if @current_profile.has_active_games? %>
+  <h2>Active games:</h2>
+  <% for game in @current_profile.active_games %>
+      <p><%= game_desc_as_link(game) %> (<%= game.player_names %>):  <%= game_play_link(game) %></p>
+  <% end %>
+<% end %>
+<% if @current_profile.has_archived_games? %>
+  <h3>You have completed <%= number_noun_desc(@current_profile.archived_games.count, 'game') %>.</h3>
+  <h3><%= link_to("Click here", archives_path) %> to view your completed games.</h3>
+<% end %>

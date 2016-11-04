@@ -17,7 +17,7 @@ themselves are made up of every combination of number and suit.  A deck of SET c
 every combination of the four characteristics above, for a result of 3x3x3x3 (or 81) cards.  Here are a
 few examples: </p>
 
-<%= print_example_cards %>
+<%= print_example_cards.html_safe %>
 
 <h2>Finding a Set</h2>
 
@@ -33,25 +33,27 @@ two purples and a green) then you don't have a Set, regardless of the other thre
 
 <h3>Here are some examples of three-card combinations that are Sets:</h3>
 
-<p><%= render_threecard_set_from_cardface_ids(4,31,58) %>: This is a Set because the colors are
+<p><%= render_threecard_set_from_cardface_ids(4,31,58).html_safe %>: This is a Set because the colors are
 all green, the shadings are all filled, the shapes are all diamonds, but the numbers are all
 different (1 diamond, 2 diamond, and 3 diamonds).  Sets like this with three common
 characteristics are the easiest to find.</p>
 
-<p><%= render_threecard_set_from_cardface_ids(12,13,17) %>: This is a Set because the colors are
+<p><%= render_threecard_set_from_cardface_ids(12,13,17).html_safe %>: This is a Set because the colors are
 all red, only one shape exists in each card, and yet the shadings and shapes are all different
 for each card.</p>
 
-<p><%= render_threecard_set_from_cardface_ids(2,40,81) %>: This Set is hard to identify because no
+<p><%= render_threecard_set_from_cardface_ids(2,40,81).html_safe %>: This Set is hard to identify because no
 characteristics are alike in any of the cards, but nevertheless it is a Set.  If no obvious Sets
 can be found at first, there's a good chance that a three-card Set exists with different colors,
 different numbers, different shapes, and different shadings.</p>
 
 <h3>...and here are some three-card examples of non-Sets:</h3>
 
-<p><%= render_threecard_set_from_cardface_ids(4,32,58) %>: This may look like a Set at first glance
+<p><%= render_threecard_set_from_cardface_ids(4,32,58).html_safe %>: This may look like a Set at first glance
 because of the similarity to the first example above.  However, the shapes are not all same or all
 different (diamond, squiggle, diamond), and as such this is not a Set.</p>
 
-<p><%= render_threecard_set_from_cardface_ids(65,60,73) %>: Another deceptive non-Set: the numbers
+<p><%= render_threecard_set_from_cardface_ids(65,60,73).html_safe %>: Another deceptive non-Set: the numbers
 and colors match up, but the shadings do not. (2 shaded, 1 filled).</p>
+
+<%= link_to("Back to home", root_path, :class => 'mock-fb-button')  %>

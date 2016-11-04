@@ -1,6 +1,6 @@
-<% @game.players.sort.each do |player| %>
+<% game.players.sort.each do |player| %>
   <div class="sets-selected">
-  <h2><%= player.name %></h2>
+  <h2><%= game.name %></h2>
   <ol id="archive_<%= player.name.underscore.sub(/\s/,"_") %>" style="text-align:left;">
     <% player.threecardsets.each_with_index do |set,i| %>
       <li><%= render_threecard_set(set).html_safe %></li>

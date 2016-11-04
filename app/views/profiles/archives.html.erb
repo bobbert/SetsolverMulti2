@@ -1,0 +1,6 @@
+<% if @current_profile.has_archived_games? %>
+  <h2>Completed games:</h2>
+  <% for game in @current_profile.archived_games %>
+    <%= render 'games/sets_selected', :game => game %>
+  <% end %>
+<% end %>

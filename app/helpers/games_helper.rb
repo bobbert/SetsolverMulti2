@@ -21,7 +21,7 @@ module GamesHelper
 
   # renders an extra-small Set card
   def extra_small_setcard_img( card )
-    image_tag(card.cardface.small_img_path, :height => 45, :width => 30, :alt => card.to_s)
+    image_tag(card.small_img_path, :height => 45, :width => 30, :alt => card.to_s)
   end
 
   # renders an invisible dummy set

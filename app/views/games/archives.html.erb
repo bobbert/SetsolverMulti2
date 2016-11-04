@@ -1,5 +1,0 @@
-<h1><%= "#{@current_profile.name}'s Completed Games" %></h1>
-<% for game in @current_profile.archived_games %>
-    <p><%= game_desc_as_link(game) %> (<%= game.player_names %>):  <%= game_play_link(game) %>
-    </p>
-<% end %>
