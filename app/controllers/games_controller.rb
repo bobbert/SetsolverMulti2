@@ -1,135 +1,185 @@
 class GamesController < ApplicationController
 
-    before_filter :get_game
+    #------ Game resource methods ----#
 
-    # GET /players/1/games
-    # GET /players/1/games.xml
+    # GET /games
+    # GET /games.json
     def index
       # listing all games within selected player
+      current_user
       @games = @current_profile.games
-
       respond_to do |format|
         format.html # index.html.erb
-        format.xml  { render :xml => @games }
+        format.json  { render :json => @games }
       end
     end
 
-    # GET /players/1/games/1
-    # GET /players/1/games/1.xml
+    # GET /games/1
+    # GET /games/1.json
     def show
+      get_game
       respond_to do |format|
         format.html { redirect_to(archive_url) if @game.finished? }
-        format.xml  { render :xml => @game }
+        format.json  { render :json => @game }
       end
     end
 
-    # GET /players/1/games/new
-    # GET /players/1/games/new.xml
+    # GET /games/new
+    # GET /games/new.json
     def new
+      current_user
       @game = Game.new
-
       respond_to do |format|
         format.html # new.html.erb
-        format.xml  { render :xml => @game }
+        format.json  { render :json => @game }
       end
     end
 
-    # GET /players/1/games/1/edit
+    # GET /games/1/edit
     def edit
       true
     end
 
-    # POST /players/1/games
-    # POST /players/1/games.xml
+    # POST /games
+    # POST /games.json
     def create
+      current_user
       # create game and save
       @game = Game.new(game_params)
       respond_to do |format|
         # creating new game, and new association between selected player and game
-        if @game.save && @game.add_new_player(@current_profile)
+        if @game.add_new_player(@current_profile) && @game.save
           flash[:notice] = 'Game was successfully created.'
           format.html { redirect_to(games_url) }
-          format.xml  { render :xml => @game, :status => :created, :location => @game }
+          format.json  { render :json => @game, :status => :created, :location => @game }
         else
           format.html { render :action => "new" }
-          format.xml  { render :xml => @game.errors, :status => :unprocessable_entity }
+          format.json  { render :json => @game.errors, :status => :unprocessable_entity }
         end
       end
     end
 
-    # PUT /players/1/games/1
-    # PUT /players/1/games/1.xml
+    # PUT /games/1
+    # PUT /games/1.json
     def update
+      get_game
       respond_to do |format|
         if @game.update_attributes(game_params)
           flash[:notice] = 'Game was successfully updated.'
           format.html { redirect_to(@game) }
-          format.xml  { head :ok }
+          format.json  { head :ok }
         else
           format.html { render :action => "edit" }
-          format.xml  { render :xml => @game.errors, :status => :unprocessable_entity }
+          format.json  { render :json => @game.errors, :status => :unprocessable_entity }
         end
       end
     end
 
-    # DELETE /players/1/games/1
-    # DELETE /players/1/games/1.xml
+    # DELETE /games/1
+    # DELETE /games/1.json
     def destroy
       # delete Score first, then Game
+      get_game
       @game.players.each {|p| p.destroy }
       @game.destroy
 
       respond_to do |format|
         format.html { redirect_to(games_url) }
-        format.xml  { head :ok }
+        format.json  { head :ok }
       end
     end
 
   #------ my controller methods ----#
 
-    # plays submitted Set cards if submit button was clicked, then refreshes board
-    def play
-      @game.start if @game.waiting_to_start?
-      if @game.active?
-        play_cards if params[:commit]  # play submitted cards, if a form submit occurred
-        @sets = @game.fill_gamefield_with_sets
+  # GET /games/1/play
+  # GET /games/1/play.json
+  # plays submitted Set cards if submit button was clicked, then refreshes board
+  def play
+    get_game
+    @game.start if @game.waiting_to_start?
+    if update_field
+      render :action => 'play'
+    else
+      redirect_to :action => 'archive'
+    end
+  end
+
+  # GET /games/1/archive
+  # GET /games/1/archive.json
+  # plays submitted Set cards if submit button was clicked, then refreshes board
+  def archive
+    get_game
+    respond_to do |format|
+      format.html # new.html.erb
+      format.json  { render :json => @game }
+    end
+  end
+
+    # PUT /games/1/play_cards.json
+    # the heart of the Setsolver game logic lies here.
+    # This method handles new games, and all types of card submissions
+    # (valid set, invalid set, wrong # of cards selected, etc. )
+    def play_cards
+      get_game
+      selection = params[:cards].split(",")
+      selection_cards = selection.map {|str_indx| @game.flat_field[str_indx.to_i] }
+      if (selection_cards.compact.length != 3)
+        render :json => {
+          :state => :bad_move,
+          :error => 'You did not select three cards.'
+        }
+        return true
       end
-      if @game.finished?
-        redirect_to :action => 'archive'
-      else
-        render :action => 'play'
+      @found_set = @game.make_set_selection(@current_player, *selection_cards)
+      unless @found_set
+        render :json => {
+          :state => :bad_move,
+          :error => 'The three cards you selected are not a set.'
+        }
+        return true
       end
+      if update_field
+        return get_field
+      end
+      render :json => {:state => :finished}
     end
 
+    # GET /games/1/field.json
     # Ajax refresh routine for auto-selection
-    def refresh
-      render_action = (play_cards ? 'setgame.xml' : 'setgame_unchanged.xml')
-      @sets = @game.fill_gamefield_with_sets
-      render :action => render_action
+    def get_field
+      get_game if @game.blank?
+      response = {:field => @game.field}
+      if @found_set.blank?
+        render :json => {:field => @game.field.to_json({:include =>
+            {:cardface => {:methods => [:abbrev, :img_path]}}
+          })
+        }
+      else
+        render :json => {:field => @game.field.to_json({:include =>
+            {:cardface => {:methods => [:abbrev, :img_path]}}
+          }),
+          :state => :good_move,
+          :set => @found_set.to_json({:include =>
+            {:cards => {:include =>
+              {:cardface => {:methods => [:abbrev, :img_path]}}}}
+            })
+        }
+      end
+      return true
     end
 
     def howtoplay
       respond_to do |format|
         format.html {  }
-        format.xml  { head :ok }
+        format.json  { head :ok }
       end
     end
 
     def archives
       respond_to do |format|
         format.html {  }
-        format.xml  { head :ok }
+        format.json  { head :ok }
       end
-    end
-
-    # add player to current game
-    def add_new_player
-      add_remove_player :add
-    end
-
-    # add player to current game
-    def remove_player
-      add_remove_player :remove
     end
 
   protected
@@ -152,36 +202,22 @@ class GamesController < ApplicationController
 
   private
 
-    # the heart of the Setsolver game logic lies here.
-    # This method handles new games, and all types of card submissions
-    # (valid set, invalid set, wrong # of cards selected, etc. )
-    def play_cards
-      selection = get_card_numbers
-      selection_cards = selection.map {|i| @game.field[i] }
-      if (selection_cards.compact.length != 3)
-        flash[:error] = 'You did not select three cards.'
-        return false
-      end
-      @found_set = @game.make_set_selection( @current_profile, *selection_cards )
-      unless @found_set
-        flash[:notice] = 'The three cards you selected are not a set.'
-        return false
-      end
-      flash[:notice] = nil
-      flash[:error] = nil
-      true
+    # update set field.  Return false if game can no longer be played.
+    def update_field
+      @set_count = @game.fill_gamefield_with_sets.count
+      !(@game.finished?)
     end
 
     # get Game object if a game ID was passed in.
     # This routine throws a UserNotPlayingGame error if the game ID passed in
     # is not being played by the current user.
     def get_game
-   #   flash[:error] = nil  # RWP TEMP - get rid of this if/when flash works correctly
-      current_user  # get user and profile
-      @sets = []
+      current_user if @current_user.blank?  # get user and profile
+      @set_count = 0
       @found_set = nil
       if (params[:id])
         @game = Game.find(params[:id])
+        @current_player = Player.find_by_profile_id_and_game_id(@current_profile.id, @game.id)
       end
       true
     end
@@ -194,27 +230,6 @@ class GamesController < ApplicationController
         (v.to_s != 'SELECTED') || (k.to_s !~ /^card[0-9]+$/)
       end
       nums = cardparams.map {|cardparam| cardparam.to_s.sub(/^card/,'').to_i }.sort
-    end
-
-    ADD_REMOVE_OPTS = { :add => 'add_new_player', :remove => 'remove_player' }
-
-    # internal routine for adding and removing players
-    def add_remove_player( opt )
-      return false unless ADD_REMOVE_OPTS.include? opt
-
-      if !(params[:player])
-        flash[:notice] = "You did not select a player to #{opt.to_s}."
-      elsif @game.started?
-        flash[:notice] = "'You can only #{opt.to_s} players to a game before starting."
-      else
-        if params[:player].include? :id
-          new_plyr = Player.find params[:player][:id]
-          @game.send(ADD_REMOVE_OPTS[opt], new_plyr)
-        else
-          flash[:notice] = "You did not select a player to #{opt.to_s}."
-        end
-      end
-      redirect_to(game_url)
     end
 
     def game_params

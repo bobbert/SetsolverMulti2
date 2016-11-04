@@ -11,11 +11,14 @@ Rails.application.routes.draw do
   # game playing link: /games/1/play
   get 'games/:id/play' => 'games#play', as: :play
 
+  # game playing link: /games/1/play
+  put 'games/:id/play_cards' => 'games#play_cards', as: :play_cards
+
   # game archive link for finished games: /games/1/archive
   get 'games/:id/archive' => 'games#archive', as: :archive
 
   # Ajax updater link: /games/1/refresh
-  get 'games/:id/refresh.:format' => 'games#refresh', as: :refresh
+  get 'games/:id/field.:format' => 'games#get_field', as: :get_field
 
   # setgame information link: /games/1/setgame
   get 'games/:id/setgame.:format' => 'games#setgame', as: :setgame

@@ -1,4 +1,4 @@
-<h1 class="setsolver">Game Archive: <%=@game.title %></h1>
+<h1 class="setsolver">Game Archive: <%=@game.name %></h1>
 <% if @game.finished? %>
   <p><b>Game started:</b> <%= h @game.started_at %> </p>
   <p><b>Game completed:</b> <%= h @game.finished_at %> </p>
@@ -10,4 +10,3 @@
   <p>No archive data exists for this game.</p>
   <p><%= link_to '[ << Back to Game ]', game_path, :class => "mock-fb-button" %></p>
 <% end %>
-

@@ -27,12 +27,12 @@ class Cardface < ActiveRecord::Base
 
   # image name, used to show picture
   def img_path
-    '/images/cards/' + img_name
+    '/cards/' + img_name
   end
 
   # image name, used to show picture
   def small_img_path
-    '/images/smallcards/' + img_name
+    '/smallcards/' + img_name
   end
 
 

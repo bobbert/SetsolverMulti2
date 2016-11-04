@@ -7,7 +7,7 @@ class Card < ActiveRecord::Base
 
   # validation conditions: must have faceup or facedown position, but not both
   def must_have_one_position_attribute
-    unless (facedown_position.blank? ^ faceup_position.blank?)
+    unless (facedown_position.blank? || faceup_position.blank?)
       errors.add_to_base("Card ##{self.id} has ambiguous position: " +
                          "facedown_pos=#{(facedown_position || '<empty>').to_s}; " +
                          "faceup_pos=#{(faceup_position || '<empty>').to_s}.!")
@@ -51,12 +51,17 @@ class Card < ActiveRecord::Base
 
   # is card face down in deck?
   def facedown?
-    facedown_position && !(faceup_position)
+    faceup_position.blank? && !(facedown_position.blank?)
   end
 
   # is card face up in deck?
   def faceup?
-    faceup_position && !(facedown_position)
+    facedown_position.blank? && !(faceup_position.blank?)
+  end
+
+  # has card been discarded?
+  def discarded?
+    facedown_position.blank? && faceup_position.blank?
   end
 
   # is card claimed?

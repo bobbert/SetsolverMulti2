@@ -1,10 +1,9 @@
 <% @game.players.sort.each do |player| %>
   <div class="sets-selected">
-  <h2>player.name</h2>
-  <h2>Average time = <%= @game.average_time %> seconds</h2>
-  <ol id="archive_<%= score.player.name_as_identifier %>" style="text-align:left;">
+  <h2><%= player.name %></h2>
+  <ol id="archive_<%= player.name.underscore.sub(/\s/,"_") %>" style="text-align:left;">
     <% player.threecardsets.each_with_index do |set,i| %>
-      <li><%= render_threecard_set(set) %> found in <%= set.seconds_to_find %> seconds</li>
+      <li><%= render_threecard_set(set).html_safe %></li>
     <% end %>
   </ol>
   </div>

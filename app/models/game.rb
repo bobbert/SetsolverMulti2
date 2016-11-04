@@ -5,6 +5,7 @@ class Game < ActiveRecord::Base
   after_create :new_deck
 
   FieldSize = 12
+  NumberOfDisplayedRows = 3
   MaxPlayers = 4
   ActivityLogSize = 4
   SetboardColWidth = 84
@@ -55,33 +56,24 @@ class Game < ActiveRecord::Base
   def start
     return false if started?
     self.started_at = Time.now
-    self.last_played_at = Time.now
+    self.paused_at = nil
+    self.resumed_at = nil
+    self.finished_at = nil
     self.save
   end
 
-  # get current gamefield
-  def field
+  def flat_field
     deck.gamefield
   end
 
-  FieldRows = {:top => 0, :middle => 1, :bottom => 2 }
-
-  # returns all cards in given row, if Set board is rendered using three
-  # horizontal rows (top, middle, bottom)
-  def field_row( row )
-    return [] unless FieldRows.keys.include? row
-    cards_in_row = []
-    field.each_with_index {|card,i| cards_in_row << card if i % 3 == FieldRows[row] }
-    cards_in_row
-  end
-
-  # returns list of card, ordered by rows top-to-bottom instead of columns left-to-right
-  def cards_by_node_order
-    cards = []
-    Game::FieldRows.sort {|a,b| a[1] <=> b[1] }.each do |kv_arr|
-      cards += field_row(kv_arr[0])
-    end
-    cards
+  # get current gamefield as 2-dimensional array, where each
+  # top-level array element is a row of cards.  If gamefield cards are notice
+  # equally distributed among each row, then topmost rows will fill up and
+  # the bottom row will contain the remainder of the cards.
+  def field
+    gamefield = flat_field
+    row_length = (gamefield.count.to_f / NumberOfDisplayedRows).ceil;
+    (1..NumberOfDisplayedRows).map { gamefield.slice!(0, row_length) }
   end
 
   # return game status in human-readable form
@@ -91,7 +83,7 @@ class Game < ActiveRecord::Base
     return 'waiting'
   end
 
-  # return Score corresponding to player passed in
+  # return score corresponding to player passed in
   def score( plyr )
     plyr.score
   end
@@ -142,12 +134,13 @@ class Game < ActiveRecord::Base
     pl = Player.new
     pl.profile = profile
     self.players << pl
+    save
   end
 
   # remove player from new game -- returns player if removed
   def remove_player( profile )
     pl = Player.find_by_profile_id_and_game_id( profile.id, self.id )
-    pl.destroy if pl
+    pl.destroy! if pl
   end
 
   # get names of players
@@ -176,19 +169,17 @@ class Game < ActiveRecord::Base
   # The timer gets refreshed when calling this function, if any cards changed.
   # Returns an empty array if no sets are found and the deck is empty (i.e. game finished)
   def fill_gamefield_with_sets
-    num_empty_cards = FieldSize - field.length
-    dealt = ( deck.deal num_empty_cards if num_empty_cards > 0 )
+    num_empty_cards = FieldSize - flat_field.length
+    dealt = (deck.deal num_empty_cards if num_empty_cards > 0)
     sets_found = find_sets
-    until (sets_found.length > 0)  # assigning to temp variable "tmp_sets"
+    until (sets_found.count > 0)  # assigning to temp variable "tmp_sets"
       if deck.all_dealt?
         self.finished_at = Time.now
-        reset_timer
         return []
       end
-      dealt = deck.deal 3
+      dealt = deck.discard_and_replace 3
       sets_found = find_sets
     end
-    reset_timer unless dealt.blank?
     sets_found
   end
 
@@ -196,9 +187,9 @@ class Game < ActiveRecord::Base
   # or an empty array if no sets are found.
   def find_sets
     found_sets = []
-    field_l = field
-    Game.each_cmb3(field_l.length).each do |arr3|
-      cards = arr3.map {|i| field_l[i] }
+    flat_field = field.flatten
+    Game.each_cmb3(flat_field.length).each do |arr3|
+      cards = arr3.map {|i| flat_field[i] }
       found_sets << cards if is_set?(*cards)
     end
     found_sets
@@ -207,7 +198,7 @@ class Game < ActiveRecord::Base
   # returns field position (as zero-position index) of each card within every three-card Set in the gamefield
   def find_set_card_positions
     card_positions = {}
-    field.each_with_index {|card, indx| card_positions[card.id] = indx }
+    flat_field.each_with_index {|card, indx| card_positions[card.id] = indx }
     find_sets.map do |threecardset|
       threecardset.map {|card| card_positions[card.id] }
     end
@@ -230,14 +221,11 @@ class Game < ActiveRecord::Base
   # return the three-card set.
   def make_set_selection( plyr, card1, card2, card3 )
     return false unless is_set?(card1, card2, card3)
-    seconds_to_find = (Time.now - self.last_played_at)
-    seconds_to_find = MaxSecondsToFindSet if (seconds_to_find > MaxSecondsToFindSet)
     # increment score
-    plyr.score += 1
+    plyr.score = (plyr.score || 0) + 1
     plyr.save
     # create new set
-    newset = Threecardset.new :cards => [card1, card2, card3], :player => plyr,
-	                      :seconds_to_find => seconds_to_find
+    newset = Threecardset.new :cards => [card1, card2, card3], :player => plyr
     newset if newset.save!
   end
 

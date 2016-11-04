@@ -5,7 +5,7 @@
 
 <h1 class="setsolver">Game <%= @game.title %></h1>
 <% if @game.active? %>
-  <p id="submitbar" style="display:none;">Submitting set; waiting for response <img src="/images/spinner.gif"></p>
+  <p id="submitbar" style="display:none;">Submitting set; waiting for response <img src="/spinner.gif"></p>
   <div id="body">
     <%= render :partial => 'gamefield' %>
     <%= render :partial => 'rightpanel' %>

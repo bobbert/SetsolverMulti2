@@ -7,6 +7,8 @@
   <%= csrf_meta_tags %>
 </head>
 <body>
+  <p id="notice" style="display:none"></p>
+  <p id="error" style="display:none"></p>
   <div id="user-widget">
     <% if current_user %>
       Signed in as <strong><%= current_user.name %></strong>!

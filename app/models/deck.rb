@@ -73,12 +73,27 @@ class Deck < ActiveRecord::Base
   # cards returned matches number requested.
   def deal(number = 1)
     faceup_init_pos = next_faceup_position
-    cards_to_deal = facedown.slice(0, number)
-    cards_to_deal.each_with_index do |card, i|
+    facedown.slice(0, number).each_with_index do |card, i|
       card.facedown_position = nil
       card.faceup_position = faceup_init_pos + i
       return false unless card.save
     end
+  end
+
+  # discards "number" number of cards, and deals an equal number of
+  # new cards.
+  def discard_and_replace(number = 1)
+    number = faceup.count if number > faceup.count
+    gamefield.slice(0, number).each_with_index do |card, i|
+      card.faceup_position = nil
+      card.facedown_position = nil
+      return false unless card.save
+    end
+    gamefield.each do |card|
+      card.faceup_position = card.faceup_position - number
+      return false unless card.save
+    end
+    deal number
   end
 
 end

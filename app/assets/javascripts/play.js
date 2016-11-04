@@ -1,45 +1,53 @@
 $(document).ready(function() {
 
   $(':checkbox').hide();
-  $('input:submit').hide();
-  $('#error').live('change', function() {  
-    ($(this).text().length == 0) ? $(this).hide() : $(this).show();
-  });
 
-  $('#setboard ul.setboard-row li img').live('click', function() {
+  $('#setboard').on('click', 'ul.setboard-row li img', function() {
     selectSetCard($(this).parent());
   });
 
-  selectSetCard = function(cell) {
+  function selectSetCard(cell) {
     var chk = cell.find('input:checkbox');
     if ((chk.length > 0) && !(isSubmitting())) {
-      was_checked = chk.attr('checked');
-      chk.attr('checked', !was_checked);
+      was_checked = chk.prop('checked');
+      chk.prop('checked', !was_checked);
       was_checked ? cell.removeClass('selected') : cell.addClass('selected');
-      if ($('#setboard ul.setboard-row li.selected input:checkbox:checked').length === 3 ) {
+      if ($('#setboard li.selected input:checkbox:checked').length === 3 ) {
         sendSetRequest();
       }
     }
   }
 
-  sendSetRequest = function() {
-    var checked_params = $.param($('li.selected input:checkbox:checked'));
-    var xml_url = $('form').attr('action').replace(/[A-Za-z_]+$/,'refresh.xml');
-    $('#submitbar').show();
+  function sendSetRequest() {
+    var action_and_query_params = "play_cards?cards=" + getSelectedCardIndices().join(",");
+    var action_url = window.location.pathname.replace(/play$/, action_and_query_params);
     $.ajax({
-      type: "GET",
-      url: (checked_params ? (xml_url + '?' + checked_params): xml_url),
-      success: function(xhr) { 
-        parseGameXml(xhr);
-        resetBoard();
-      },
-      error: function(xml) { 
-        resetBoard();
+      type: "PUT",
+      url: action_url
+    }).done(function(data) {
+      console.log("Return value = " + JSON.stringify(data));
+      if (data.state === 'good_move') {
+        $('#notice').hide();
+        $('#error').hide();
+        updateBoard(data);
       }
+      else if (data.state === 'bad_move') {
+        $('#notice').text(data.error).show();
+        $('#error').hide();
+      }
+    }).fail(function(jqXHR, textStatus) {
+      $('#notice').hide();
+      $('#error').text(textStatus).show();
     });
   }
 
-  resetBoard = function() {
+  function getSelectedCardIndices() {
+    return $.map($('li.selected input:checkbox:checked'), function(checkEl) {
+      return $(checkEl).attr('name').replace(/^card/, "");
+    });
+  }
+
+  function resetBoard() {
     $('#submitbar').hide();
     $('input:checkbox:checked').each(function() {
       selectSetCard($(this).parent());
@@ -47,7 +55,7 @@ $(document).ready(function() {
   }
 
   // saving image into DOM then loading previewer
-  parseGameXml = function(xml) {
+  function parseGameXml(xml) {
     var num_cards = $(xml).find("field_size").text();
     var indx = 0;
 
@@ -86,11 +94,11 @@ $(document).ready(function() {
       //var field_position = $(this).find("field_id").text();
       var set_card_name = $(this).find("name").text();
       var set_card_imgpath = $(this).find("image_path").text();
-  
+
       // run previewer-loading code after image loads
       img_list.eq(indx).attr('title', set_card_name).attr('src', set_card_imgpath);
       indx += 1;
-      
+
     });
 
     // update activity log on right if new set is found
@@ -101,7 +109,7 @@ $(document).ready(function() {
   }
 
   // parse flash messages (notices or errors) found in XML and return True if present
-  parseErrorsIfFound = function(xml) {
+  function parseErrorsIfFound(xml) {
     var errors_found = false;
     $('#notice, #error').each(function() {
       msg_txt = $(xml).find(this.id).text();
@@ -117,7 +125,7 @@ $(document).ready(function() {
   }
 
   // adds new column to the right of Set gamefield
-  addCells = function() {
+  function addCells() {
     //var col_len = $('#setboard ul.setboard-row li:first').css('width');
     var col_len = 84;  // RWP TEMP
     var num_cards = $('#setboard ul.setboard-row li').length;
@@ -141,7 +149,7 @@ $(document).ready(function() {
 
   // updates activity log: remove set at end of list, and add newly
   updateActivityLog = function(setcard_xml) {
-    if ( $('ul#set_records li').length == 4 ) { 
+    if ( $('ul#set_records li').length == 4 ) {
       $('ul#set_records li:last').remove();
     }
     var new_col = cloneNewActivityNode();
@@ -176,4 +184,3 @@ $(document).ready(function() {
   }
 
 });
-

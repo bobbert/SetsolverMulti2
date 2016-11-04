@@ -1,14 +1,15 @@
 <!--[form:game]-->
 
-<div id="setboard_panel" class="setboard-panel" style=width:<%= (@game.field.length / 3) * Game::SetboardColWidth %>px;">
+<div id="setboard_panel" class="setboard-panel">
   <h3>The deck has <span id="remaining"><%= number_noun_desc( @game.deck.facedown.length, 'card' ) %></span> remaining. </h3>
-  <h3><span id="num_sets"><%= number_noun_desc( @sets.length, 'set' ) %></span> can be found below: </h3>
+  <h3><span id="num_sets"><%= number_noun_desc( @set_count, 'set' ) %></span> can be found below: </h3>
   <div id="setboard" class="setboard">
-    <% Game::FieldRows.sort {|a,b| a[1] <=> b[1] }.each_with_index do |kv_arr, row_i| %>
-      <ul id="row<%= kv_arr[1] %>" class="setboard-row">
-      <% @game.field_row(kv_arr[0]).each_with_index do |c,col_i| %>
-        <% indx = (Game::FieldRows.length * col_i) + row_i %>
+    <% indx = 0 %>
+    <% @game.field.each_with_index do |row, row_i| %>
+      <ul id="row<%= row_i %>" class="setboard-row">
+      <% row.each_with_index do |c,col_i| %>
         <li id="c_card<%= indx.to_s %>" class="setboard-cell"><%= check_box_tag(('card' + indx.to_s), 'SELECTED', false) %><%= card_image c %></li>
+        <% indx += 1 %>
       <% end %>
       </ul>
     <% end %>

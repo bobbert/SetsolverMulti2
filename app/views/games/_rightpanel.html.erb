@@ -15,10 +15,10 @@
     <h1>Game Activity</h1>
     <ul id="set_records" class="set-records">
     <% @game.sets.each do |set| %>
-      <li><%= render_set_found_text(set) %></li>
+      <li><%= render_set_found_text(set).html_safe %></li>
     <% end %>
     <% if @game.selection_count == 0 %>
-      <li class="dummy-first-node"><%= render_set_found_text(nil) %></li>
+      <li class="dummy-first-node"><%= render_set_found_text(nil).html_safe %></li>
     <% end %>
     </ul>
   </div>

@@ -21,7 +21,7 @@ module GamesHelper
 
   # renders an extra-small Set card
   def extra_small_setcard_img( card )
-    image_tag( ('smallcards/' + card.img_name), :height => 45, :width => 30, :alt => card.to_s )
+    image_tag(card.cardface.small_img_path, :height => 45, :width => 30, :alt => card.to_s)
   end
 
   # renders an invisible dummy set
@@ -54,14 +54,13 @@ module GamesHelper
 
   # returns image HTML for a single card
   def card_image( card )
-    image_tag(('cards/' + card.img_name), :height => 90, :width => 60, :alt => card.to_s)
+    image_tag(card.img_path, :height => 90, :width => 60, :alt => card.to_s)
   end
 
   def render_set_found_text( set )
     "<h5>#{formatted_date(set.created_at) if set}</h5> " +
     "<span class=\"setlisting-name\">#{set.player.name if set}</span> found a set: " +
-    "<p class=\"setlisting\">#{render_threecard_set(set)}</p> " +
-    "in <span class=\"setlisting-time\">#{set.seconds_to_find if set}</span> seconds"
+    "<p class=\"setlisting\">#{render_threecard_set(set)}</p> "
   end
 
 end
