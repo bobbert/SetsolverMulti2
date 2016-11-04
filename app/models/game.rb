@@ -41,6 +41,10 @@ class Game < ActiveRecord::Base
     "[\##{id}] \"#{name}\""
   end
 
+  def cards_remaining
+    deck.facedown.length if deck
+  end
+
   # create new deck with full set of cards, and shuffle cards
   # if auto-shuffle parameter is set
   def new_deck

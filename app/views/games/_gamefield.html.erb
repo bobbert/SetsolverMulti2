@@ -1,7 +1,7 @@
 <!--[form:game]-->
 
 <div id="setboard_panel" class="setboard-panel">
-  <h3>The deck has <span id="remaining"><%= number_noun_desc( @game.deck.facedown.length, 'card' ) %></span> remaining. </h3>
+  <h3>The deck has <span id="remaining"><%= number_noun_desc( @game.cards_remaining, 'card' ) %></span> remaining. </h3>
   <h3><span id="num_sets"><%= number_noun_desc( @set_count, 'set' ) %></span> can be found below: </h3>
   <div id="setboard" class="setboard">
     <% indx = 0 %>

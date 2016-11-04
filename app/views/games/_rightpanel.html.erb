@@ -6,7 +6,7 @@
     <ul id="score_listing" class="score-listing">
     <% @game.players.each do |player| %>
       <li>(Pic Here)
-          (Name Here):
+          <%= player.name %>:
           <span id="gamescore_<%= player.id %>"><%= player.score %></span></li>
     <% end %>
     </ul>
