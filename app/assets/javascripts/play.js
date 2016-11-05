@@ -1,5 +1,7 @@
 $(document).ready(function() {
 
+  var dispatcher = new WebSocketRails('localhost:3000/websocket');
+
   $(':checkbox').hide();
 
   $('#setboard').on('click', 'ul.setboard-row li img', function() {
@@ -16,6 +18,11 @@ $(document).ready(function() {
         sendSetRequest();
       }
     }
+  }
+
+  function sendSetRequestWS() {
+    var selected_cards = getSelectedCardIndices();
+    dispatcher.trigger('event_name', {cards: selected_cards});
   }
 
   function sendSetRequest() {
@@ -75,7 +82,7 @@ $(document).ready(function() {
 
   function getSelectedCardIndices() {
     return $.map($('li.selected input:checkbox:checked'), function(checkEl) {
-      return $(checkEl).attr('name').replace(/^card/, "");
+      return parseInt($(checkEl).attr('name').replace(/^card/, ""));
     });
   }
 

@@ -18,6 +18,12 @@ gem 'coffee-rails', '~> 4.1.0'
 gem 'omniauth'
 gem "omniauth-google-oauth2", "~> 0.2.1"
 
+# WebSockets functionality for multiplayer mode
+gem 'faye-websocket', '0.10.0'
+gem 'websocket-rails', '~> 0.7'
+# web server for using WebSockets in development
+gem 'thin', '~> 1.7'
+
 # Use jquery as the JavaScript library
 gem 'jquery-rails'
 # Turbolinks makes following links in your web application faster. Read more: https://github.com/rails/turbolinks
