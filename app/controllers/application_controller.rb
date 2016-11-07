@@ -13,8 +13,8 @@ private
         @current_profile = Profile.new :user_id => session[:user_id]
         @current_profile.save!
       end
-      @current_user
     end
+    @current_user
   end
 
   helper_method :current_user

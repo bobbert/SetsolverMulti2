@@ -3,10 +3,10 @@ class ProfilesController < ApplicationController
   # user dashboard / home page
   def home
     current_user
-    @games = @current_profile.games
+    @games = @current_profile.games if @current_profile
     respond_to do |format|
       format.html # home.html.erb
-      format.json  { render :json => @current_profile }
+      format.json  { render :json => (@current_profile || {}) }
     end
   end
 
