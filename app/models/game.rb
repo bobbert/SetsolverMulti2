@@ -169,23 +169,7 @@ class Game < ActiveRecord::Base
     (total_time / selection_count.to_f).round_with_precision 3
   end
 
-  # fills gamefield so that it contains at least 1 set, then return array of sets.
-  # The timer gets refreshed when calling this function, if any cards changed.
-  # Returns an empty array if no sets are found and the deck is empty (i.e. game finished)
-  def fill_gamefield_with_sets
-    num_empty_cards = FieldSize - flat_field.length
-    dealt = (deck.deal num_empty_cards if num_empty_cards > 0)
-    sets_found = find_sets
-    until (sets_found.count > 0)  # assigning to temp variable "tmp_sets"
-      if deck.all_dealt?
-        self.finished_at = Time.now
-        return []
-      end
-      dealt = deck.discard_and_replace 3
-      sets_found = find_sets
-    end
-    sets_found
-  end
+  #--- Set Game logic ----#
 
   # returns an array-of-arrays where the inner array are matching sets of three Card objects,
   # or an empty array if no sets are found.
@@ -208,10 +192,11 @@ class Game < ActiveRecord::Base
     end
   end
 
-  # the set-finding algorithm: given three card positions (within face-up array),
-  # get the cardfaces and then iterate through each attribute (color, shading,
-  # shape, number) and removes all instances where only a match of 2 exists --
-  # because a match of 2 means "not all the same, and not all different."
+  # the basic algorithm for determining if three cards are a set: given three
+  # card positions (within face-up array), iterate through each attribute
+  # (color, shading, shape, number) and remove all instances where only a
+  # match of 2 exists -- because a match of 2 means "not all the same,
+  # and not all different."
   def is_set?( card1, card2, card3 )
     cardfaces = [card1.cardface, card2.cardface, card3.cardface]
     Cardface::ATTR.each do |attr|
@@ -219,6 +204,79 @@ class Game < ActiveRecord::Base
     end
     true
   end
+
+  # the heart of the Setsolver game logic lies here.
+  # This method handles new games, and all types of card submissions
+  # (valid set, invalid set, wrong # of cards selected, etc. )
+  def play_cards_from_field(player, indices)
+    selection_cards = indices.map {|str_indx| flat_field[str_indx.to_i] }
+    if (selection_cards.compact.length != 3)
+      return {
+        :state => :bad_move,
+        :error => 'You did not select three cards.'
+      }
+    end
+    found_set = make_set_selection(player, *selection_cards)
+    unless found_set
+      return {
+        :state => :bad_move,
+        :error => 'The three cards you selected are not a set.'
+      }
+    end
+    set_count = fill_gamefield_with_sets.count
+    if (set_count > 0)
+      return get_game_state(found_set, set_count)
+    end
+    return {:state => :finished}
+  end
+
+  # return game state as object
+  def get_game_state(found_set = nil, set_count = 0)
+    fill_gamefield_with_sets if (set_count < 1)
+    response = {
+      :field => flat_field.map {|card| {:name => card.name, :image => card.img_path} },
+      :cards_remaining => cards_remaining,
+      :set_count => set_count,
+      :scores => players.map {|plyr| {:score => plyr.score, :id => plyr.id} }
+    }
+    unless found_set.blank?
+      response[:set] = {
+        :created_at => formatted_date(found_set.created_at),
+        :cards => found_set.cards.map {|card| {:name => card.name, :image => card.small_img_path} }
+      }
+      response[:set_found_by] = found_set.player.name
+      response[:state] = :good_move
+    end
+    return response
+  end
+
+  # given an array of cardfaces and an attribute, finds out how many distinct
+  # attribute types exist in the array for the attribute type passed in.
+  def num_different_attr( attr, cardface_arr )
+    res = cardface_arr.map {|card| card.send(attr) }
+    res.uniq.length
+  end
+
+  # fills gamefield so that it contains at least 1 set, then return array of sets.
+  # The timer gets refreshed when calling this function, if any cards changed.
+  # Returns an empty array if no sets are found and the deck is empty (i.e. game finished)
+  def fill_gamefield_with_sets
+    num_empty_cards = FieldSize - flat_field.length
+    dealt = (deck.deal num_empty_cards if num_empty_cards > 0)
+    sets_found = find_sets
+    until (sets_found.count > 0)  # assigning to temp variable "tmp_sets"
+      if deck.all_dealt?
+        finished_at = Time.now
+        save!
+        return []
+      end
+      dealt = deck.discard_and_replace 3
+      sets_found = find_sets
+    end
+    sets_found
+  end
+
+private
 
   # evaluates player submission, and if set is valid:
   # set all three cards as claimed by player passed in, then
@@ -232,15 +290,6 @@ class Game < ActiveRecord::Base
     newset = Threecardset.new :cards => [card1, card2, card3], :player => plyr
     newset if newset.save!
   end
-
-  # given an array of cardfaces and an attribute, finds out how many distinct
-  # attribute types exist in the array for the attribute type passed in.
-  def num_different_attr( attr, cardface_arr )
-    res = cardface_arr.map {|card| card.send(attr) }
-    res.uniq.length
-  end
-
-private
 
   # pause game
   def pause

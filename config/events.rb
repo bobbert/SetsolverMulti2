@@ -12,13 +12,16 @@ WebsocketRails::EventMap.describe do
   #   end
   # The above will handle an event triggered on the client like `product.new`.
 
-  subscribe :play_cards, :to => GameActionsController, :with_method => :play_cards
-
   # The :client_connected method is fired automatically when a new client connects
   subscribe :client_connected, :to => GameActionsController, :with_method => :client_connected
   # The :client_disconnected method is fired automatically when a client disconnects
   subscribe :client_disconnected, :to => GameActionsController, :with_method => :client_disconnected
   # The :connection_closed method is fired automatically when a client loses connection without sending a disconnect frame.
   subscribe :connection_closed, :to => GameActionsController, :with_method => :connection_closed
-  
+
+  # Event for playing Set cards
+  subscribe :play_cards, :to => GameActionsController, :with_method => :play_cards
+  # Event for playing Set cards
+  subscribe :update_game, :to => GameActionsController, :with_method => :play_cards
+
 end

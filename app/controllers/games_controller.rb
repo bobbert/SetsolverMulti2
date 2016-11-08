@@ -34,7 +34,7 @@ class GamesController < ApplicationController
         # creating new game, and new association between selected player and game
         if @game.add_new_player(@current_profile) && @game.save
           flash[:notice] = 'Game was successfully created.'
-          format.html { redirect_to(games_url) }
+          format.html { redirect_to(game_url(@game)) }
           format.json  { render :json => @game, :status => :created, :location => @game }
         else
           format.html { render :action => "new" }
@@ -81,10 +81,10 @@ class GamesController < ApplicationController
   def play
     get_game
     @game.start if @game.waiting_to_start?
-    if update_field
-      render :action => 'play'
-    else
+    if @game.fill_gamefield_with_sets.blank?
       redirect_to :action => 'archive'
+    else
+      render :action => 'play'
     end
   end
 
@@ -106,49 +106,14 @@ class GamesController < ApplicationController
     def play_cards
       get_game
       selection = params[:cards].split(",")
-      selection_cards = selection.map {|str_indx| @game.flat_field[str_indx.to_i] }
-      if (selection_cards.compact.length != 3)
-        render :json => {
-          :state => :bad_move,
-          :error => 'You did not select three cards.'
-        }
-        return true
-      end
-      @found_set = @game.make_set_selection(@current_player, *selection_cards)
-      unless @found_set
-        render :json => {
-          :state => :bad_move,
-          :error => 'The three cards you selected are not a set.'
-        }
-        return true
-      end
-      if update_field
-        return get_field
-      end
-      render :json => {:state => :finished}
+      render :json => @game.play_cards_from_field(@current_player, selection)
     end
 
     # GET /games/1/field.json
     # Ajax refresh routine for auto-selection
-    def get_field
-      get_game if @game.blank?
-      update_field if @set_count < 1
-      response = {
-        :field => @game.flat_field.map {|card| {:name => card.name, :image => card.img_path} },
-        :cards_remaining => @game.cards_remaining,
-        :set_count => @set_count,
-        :scores => @game.players.map {|plyr| {:score => plyr.score, :id => plyr.id} }
-      }
-      unless @found_set.blank?
-        response[:set] = {
-          :created_at => formatted_date(@found_set.created_at),
-          :cards => @found_set.cards.map {|card| {:name => card.name, :image => card.small_img_path} }
-        }
-        response[:set_found_by] = @found_set.player.name
-        response[:state] = :good_move
-      end
-      render :json => response
-      return true
+    def get_game_state
+      get_game
+      render :json => @game.get_game_state
     end
 
     def howtoplay
@@ -184,12 +149,6 @@ class GamesController < ApplicationController
     end
 
   private
-
-    # update set field.  Return false if game can no longer be played.
-    def update_field
-      @set_count = @game.fill_gamefield_with_sets.count
-      !(@game.finished?)
-    end
 
     # get Game object if a game ID was passed in.
     # This routine throws a UserNotPlayingGame error if the game ID passed in

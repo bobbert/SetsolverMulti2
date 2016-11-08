@@ -21,7 +21,7 @@ Rails.application.routes.draw do
   get 'games/:id/archive' => 'games#archive', as: :archive
 
   # Ajax updater link: /games/1/refresh
-  get 'games/:id/field.:format' => 'games#get_field', as: :get_field
+  get 'games/:id/field.:format' => 'games#get_game_state', as: :get_game_state
 
   # OAuth based routes
   get 'auth/:provider/callback', to: 'sessions#create'
